@@ -41,7 +41,16 @@ const AddTaskForm = ({ onAddTask }) => {
     <Box 
       component="form" 
       onSubmit={handleSubmit} 
-      sx={{ mb: 4, p: 2, bgcolor: '#f8f9fa', borderRadius: 2 }}
+      sx={{ 
+        mb: 4, 
+        p: 3, 
+        bgcolor: '#fff0f6', // pastel pink background
+        borderRadius: 3, 
+        boxShadow: '0 2px 12px 0 #ffe0eb',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2
+      }}
     >
       <Grid container spacing={2} alignItems="center">
         <Grid item xs={12} sm={5}>

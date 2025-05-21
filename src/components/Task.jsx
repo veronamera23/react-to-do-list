@@ -6,7 +6,8 @@ import {
   Checkbox, 
   IconButton, 
   Chip,
-  Typography
+  Typography,
+  Box
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -72,25 +73,39 @@ const Task = ({ task, onDelete, onEdit, onToggleComplete }) => {
         }
         secondary={
           <React.Fragment>
-            {dueDate && (
-              <Typography
-                component="span"
-                variant="body2"
-                sx={{
-                  display: 'block',
-                  color: isOverdue ? 'error.main' : 'text.secondary'
-                }}
-              >
-                {isOverdue ? 'OVERDUE: ' : 'Due: '}
-                {formatDueDate(dueDate)}
-              </Typography>
-            )}
-            <Chip 
-              size="small" 
-              label={priority.toUpperCase()} 
-              color={getPriorityColor(priority)}
-              sx={{ mt: 1 }}
-            />
+            {/* Created At */}
+            <Typography
+              variant="caption"
+              sx={{
+                display: 'block',
+                color: '#b39ddb',
+                mt: 1,
+                fontStyle: 'italic',
+                fontSize: '0.85rem'
+              }}
+            >
+              Created: {task.createdAt ? format(new Date(task.createdAt), 'MMM d, yyyy h:mm a') : ''}
+            </Typography>
+            {/* Due Date & Priority */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+              {dueDate && (
+                <Typography
+                  component="span"
+                  variant="body2"
+                  sx={{
+                    color: isOverdue ? 'error.main' : 'text.secondary'
+                  }}
+                >
+                  {isOverdue ? 'OVERDUE: ' : 'Due: '}
+                  {formatDueDate(dueDate)}
+                </Typography>
+              )}
+              <Chip 
+                size="small" 
+                label={priority.toUpperCase()} 
+                color={getPriorityColor(priority)}
+              />
+            </Box>
           </React.Fragment>
         }
       />

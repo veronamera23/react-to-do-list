@@ -1,6 +1,7 @@
 // src/App.jsx
 import React, { useState, useEffect } from 'react';
 import { Container, Typography, Box, Paper, Button, Snackbar, Alert } from '@mui/material';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 import * as api from './services/api';
 
 // Import your components
@@ -9,6 +10,57 @@ import TaskList from './components/TaskList';
 import EditTaskForm from './components/EditTaskForm';
 import ConfirmDialog from './components/ConfirmDialog';
 import SortingOptions from './components/SortingOptions';
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#f8bbd0', // pastel pink
+      contrastText: '#fff',
+    },
+    secondary: {
+      main: '#ffe0b2', // pastel beige
+      contrastText: '#a1887f',
+    },
+    background: {
+      default: '#fff8f6', // very light pink/beige
+      paper: '#fff0f6',   // slightly pinker for cards
+    },
+  },
+  typography: {
+    fontFamily: '"Quicksand", "Comic Sans MS", cursive, sans-serif',
+    h4: {
+      fontWeight: 700,
+      color: '#d48fa6',
+    },
+  },
+  components: {
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 16,
+          background: '#fff0f6',
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 20,
+          textTransform: 'none',
+          fontWeight: 600,
+        },
+      },
+    },
+    MuiSnackbarContent: {
+      styleOverrides: {
+        root: {
+          background: '#f8bbd0',
+          color: '#a1887f',
+        },
+      },
+    },
+  },
+});
 
 // Replace react-toastify with MUI's Snackbar
 function App() {
@@ -199,108 +251,110 @@ function App() {
   };
 
   return (
-    <Container maxWidth="md">
-      {/* Task deleted snackbar with UNDO button */}
-      <Snackbar 
-        open={snackbarOpen && showUndoButton} 
-        autoHideDuration={8000} 
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        message="Task deleted"
-        action={
-          <>
-            <Button 
-              color="secondary" 
-              size="small" 
-              onClick={handleUndoDelete}
-              sx={{ 
-                color: '#fff', 
-                fontWeight: 'bold',
-                '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)'
-                }
-              }}
-            >
-              UNDO
-            </Button>
-            <Button
-              color="inherit"
-              size="small"
-              onClick={handleCloseSnackbar}
-              sx={{
-                color: '#fff',
-                fontSize: '2rem',        // Increase the size of the "×"
-                minWidth: '40px',        // Make the button area bigger for easier clicking
-                padding: 0,
-                lineHeight: 1,
-                fontWeight: 'bold'
-              }}
-            >
-              ×
-            </Button>
-          </>
-        }
-        sx={{
-          '& .MuiSnackbarContent-root': {
-            backgroundColor: '#323232',
-            minWidth: '250px'
+    <ThemeProvider theme={theme}>
+      <Container maxWidth="md">
+        {/* Task deleted snackbar with UNDO button */}
+        <Snackbar 
+          open={snackbarOpen && showUndoButton} 
+          autoHideDuration={8000} 
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          message="Task deleted"
+          action={
+            <>
+              <Button 
+                color="secondary" 
+                size="small" 
+                onClick={handleUndoDelete}
+                sx={{ 
+                  color: '#fff', 
+                  fontWeight: 'bold',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)'
+                  }
+                }}
+              >
+                UNDO
+              </Button>
+              <Button
+                color="inherit"
+                size="small"
+                onClick={handleCloseSnackbar}
+                sx={{
+                  color: '#fff',
+                  fontSize: '2rem',        // Increase the size of the "×"
+                  minWidth: '40px',        // Make the button area bigger for easier clicking
+                  padding: 0,
+                  lineHeight: 1,
+                  fontWeight: 'bold'
+                }}
+              >
+                ×
+              </Button>
+            </>
           }
-        }}
-      />
-      
-      {/* Regular notification snackbar (no UNDO) */}
-      <Snackbar 
-        open={snackbarOpen && !showUndoButton} 
-        autoHideDuration={4000} 
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert 
-          onClose={handleCloseSnackbar} 
-          severity={snackbarSeverity} 
-          sx={{ width: '100%' }}
-          variant="filled"
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
-      
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center">
-          React To-Do List App
-        </Typography>
+          sx={{
+            '& .MuiSnackbarContent-root': {
+              backgroundColor: '#323232',
+              minWidth: '250px'
+            }
+          }}
+        />
         
-        <Paper elevation={3} sx={{ p: 3, mt: 4 }}>
-          <AddTaskForm onAddTask={handleAddTask} />
+        {/* Regular notification snackbar (no UNDO) */}
+        <Snackbar 
+          open={snackbarOpen && !showUndoButton} 
+          autoHideDuration={4000} 
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert 
+            onClose={handleCloseSnackbar} 
+            severity={snackbarSeverity} 
+            sx={{ width: '100%' }}
+            variant="filled"
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
+        
+        <Box sx={{ my: 4 }}>
+          <Typography variant="h4" component="h1" gutterBottom align="center">
+            React To-Do List App
+          </Typography>
           
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-            <SortingOptions sortBy={sortBy} onSortChange={handleSortChange} />
-          </Box>
-          
-          <TaskList
-            tasks={getSortedTasks()}
-            onDelete={handleDeleteClick}
-            onEdit={handleEditTask}
-            onToggleComplete={handleToggleComplete}
-          />
-        </Paper>
-      </Box>
-      
-      <EditTaskForm
-        open={isEditDialogOpen}
-        task={editTask}
-        onClose={() => setIsEditDialogOpen(false)}
-        onSave={handleSaveEdit}
-      />
-      
-      <ConfirmDialog
-        open={isConfirmDialogOpen}
-        title="Delete Task"
-        message="Are you sure you want to delete this task?"
-        onConfirm={handleConfirmDelete}
-        onCancel={() => setIsConfirmDialogOpen(false)}
-      />
-    </Container>
+          <Paper elevation={3} sx={{ p: 3, mt: 4 }}>
+            <AddTaskForm onAddTask={handleAddTask} />
+            
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+              <SortingOptions sortBy={sortBy} onSortChange={handleSortChange} />
+            </Box>
+            
+            <TaskList
+              tasks={getSortedTasks()}
+              onDelete={handleDeleteClick}
+              onEdit={handleEditTask}
+              onToggleComplete={handleToggleComplete}
+            />
+          </Paper>
+        </Box>
+        
+        <EditTaskForm
+          open={isEditDialogOpen}
+          task={editTask}
+          onClose={() => setIsEditDialogOpen(false)}
+          onSave={handleSaveEdit}
+        />
+        
+        <ConfirmDialog
+          open={isConfirmDialogOpen}
+          title="Delete Task"
+          message="Are you sure you want to delete this task?"
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setIsConfirmDialogOpen(false)}
+        />
+      </Container>
+    </ThemeProvider>
   );
 }
 

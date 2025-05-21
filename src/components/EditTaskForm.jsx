@@ -11,7 +11,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Grid
+  Grid,
+  Box
 } from '@mui/material';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
@@ -46,6 +47,14 @@ const EditTaskForm = ({ open, task, onClose, onSave }) => {
 
   if (!task) return null;
 
+  // Style for the DatePicker wrapper to ensure proper alignment
+  const datePickerStyle = {
+    width: '100%',
+    '& .MuiFormControl-root': {
+      marginTop: '16px', // Match the margin of the FormControl
+    }
+  };
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>Edit Task</DialogTitle>
@@ -62,17 +71,25 @@ const EditTaskForm = ({ open, task, onClose, onSave }) => {
           
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12} sm={6}>
-              <DatePicker
-                selected={dueDate}
-                onChange={date => setDueDate(date)}
-                showTimeSelect
-                timeFormat="HH:mm"
-                timeIntervals={15}
-                timeCaption="Time"
-                dateFormat="MMMM d, yyyy h:mm aa"
-                placeholderText="Due Date & Time"
-                customInput={<TextField fullWidth label="Due Date & Time" />}
-              />
+              <Box sx={datePickerStyle}>
+                <DatePicker
+                  selected={dueDate}
+                  onChange={date => setDueDate(date)}
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  timeCaption="Time"
+                  dateFormat="MMMM d, yyyy h:mm aa"
+                  placeholderText="Due Date & Time"
+                  customInput={
+                    <TextField 
+                      fullWidth 
+                      label="Due Date & Time" 
+                      margin="normal" // Add this to match FormControl
+                    />
+                  }
+                />
+              </Box>
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth margin="normal">
@@ -92,8 +109,12 @@ const EditTaskForm = ({ open, task, onClose, onSave }) => {
         </form>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSubmit} variant="contained" color="primary">
+        <Button onClick={onClose} color="primary">Cancel</Button>
+        <Button 
+          onClick={handleSubmit} 
+          variant="contained" 
+          color="primary"
+        >
           Save Changes
         </Button>
       </DialogActions>
