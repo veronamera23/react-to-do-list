@@ -1,19 +1,16 @@
 // src/App.jsx
-// Update your App.jsx with some modifications for Firebase
-// Only showing the parts that need to change
-
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Box, Paper } from '@mui/material';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { Container, Typography, Box, Paper, Button, Snackbar, Alert } from '@mui/material';
+import * as api from './services/api';
 
+// Import your components
 import AddTaskForm from './components/AddTaskForm';
 import TaskList from './components/TaskList';
 import EditTaskForm from './components/EditTaskForm';
 import ConfirmDialog from './components/ConfirmDialog';
 import SortingOptions from './components/SortingOptions';
-import * as api from './services/api';
 
+// Replace react-toastify with MUI's Snackbar
 function App() {
   const [tasks, setTasks] = useState([]);
   const [sortBy, setSortBy] = useState('dateAdded');
@@ -22,7 +19,29 @@ function App() {
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [lastDeletedTask, setLastDeletedTask] = useState(null);
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
+  
+  // Snackbar related states
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [showUndoButton, setShowUndoButton] = useState(false);
+
+  // Show notification function
+  const showNotification = (message, severity = 'success', withUndo = false) => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setShowUndoButton(withUndo);
+    setSnackbarOpen(true);
+  };
+
+  // Handle close snackbar
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbarOpen(false);
+  };
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -32,7 +51,7 @@ function App() {
         setTasks(data);
       } catch (error) {
         console.error('Error fetching tasks:', error);
-        toast.error('Failed to load tasks. Please try again later.');
+        showNotification('Failed to load tasks. Please try again later.', 'error');
       } finally {
         setLoading(false);
       }
@@ -45,10 +64,10 @@ function App() {
     try {
       const addedTask = await api.createTask(newTask);
       setTasks(prevTasks => [addedTask, ...prevTasks]);
-      toast.success('Task added successfully!');
+      showNotification('Task added successfully!');
     } catch (error) {
       console.error('Error adding task:', error);
-      toast.error('Failed to add task. Please try again.');
+      showNotification('Failed to add task. Please try again.', 'error');
     }
   };
 
@@ -65,45 +84,76 @@ function App() {
         prevTasks.map(task => task.id === savedTask.id ? savedTask : task)
       );
       setIsEditDialogOpen(false);
-      toast.success('Task updated successfully!');
+      showNotification('Task updated successfully!');
     } catch (error) {
       console.error('Error updating task:', error);
-      toast.error('Failed to update task. Please try again.');
+      showNotification('Failed to update task. Please try again.', 'error');
     }
   };
 
   const handleDeleteClick = (id) => {
     const task = tasks.find(task => task.id === id);
     setTaskToDelete(task);
+    setIsConfirmDialogOpen(true);
   };
 
   const handleConfirmDelete = async () => {
     try {
-      await api.deleteTask(taskToDelete.id); // Use Firestore string ID
-      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskToDelete.id));
+      const taskId = taskToDelete.id;
+      const taskCopy = {...taskToDelete}; // Make a copy of the task before deleting
+      
+      // Store the original task data before deletion
+      setLastDeletedTask(taskCopy);
+      
+      // Remove task from the list first (optimistic UI update)
+      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
       setIsConfirmDialogOpen(false);
-      toast.success('Task deleted successfully!');
+      
+      // Then delete from backend
+      await api.deleteTask(taskId);
+      
+      // Show deletion notification with UNDO option
+      showNotification('Task deleted!', 'info', true);
     } catch (error) {
       console.error('Error deleting task:', error);
-      toast.error('Failed to delete task. Please try again.');
+      showNotification('Failed to delete task. Please try again.', 'error');
     }
   };
 
   const handleUndoDelete = async () => {
-    if (!lastDeletedTask) return;
-    
+    if (!lastDeletedTask) {
+      console.log("No task to restore");
+      return;
+    }
+
     try {
-      // For Firebase, we need to create a new task rather than restore the old one
+      // When restoring a task, we want to preserve as much of the original data as possible
+      const { id: oldId, ...taskData } = lastDeletedTask;
+      
+      console.log("Restoring task:", taskData);
+      
+      // Create a new task with the original data
       const restoredTask = await api.createTask({
-        ...lastDeletedTask,
-        createdAt: new Date().toISOString()
+        ...taskData,
+        createdAt: new Date().toISOString() // Update creation date to now
       });
+      
+      console.log("Restored task:", restoredTask);
+      
+      // Add the restored task back to the list at the top
       setTasks(prevTasks => [restoredTask, ...prevTasks]);
+      
+      // Reset deleted task reference and close the snackbar
       setLastDeletedTask(null);
-      toast.success('Task restored!');
+      setSnackbarOpen(false);
+      
+      // Show a confirmation that the task was restored
+      setTimeout(() => {
+        showNotification('Task restored successfully!', 'success');
+      }, 300); // Small delay for better UX
     } catch (error) {
       console.error('Error restoring task:', error);
-      toast.error('Failed to restore task. Please try again.');
+      showNotification('Failed to restore task. Please try again.', 'error');
     }
   };
 
@@ -118,7 +168,7 @@ function App() {
       );
     } catch (error) {
       console.error('Error updating task status:', error);
-      toast.error('Failed to update task status. Please try again.');
+      showNotification('Failed to update task status. Please try again.', 'error');
     }
   };
 
@@ -150,7 +200,70 @@ function App() {
 
   return (
     <Container maxWidth="md">
-      <ToastContainer position="bottom-right" />
+      {/* Task deleted snackbar with UNDO button */}
+      <Snackbar 
+        open={snackbarOpen && showUndoButton} 
+        autoHideDuration={8000} 
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        message="Task deleted"
+        action={
+          <>
+            <Button 
+              color="secondary" 
+              size="small" 
+              onClick={handleUndoDelete}
+              sx={{ 
+                color: '#fff', 
+                fontWeight: 'bold',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)'
+                }
+              }}
+            >
+              UNDO
+            </Button>
+            <Button
+              color="inherit"
+              size="small"
+              onClick={handleCloseSnackbar}
+              sx={{
+                color: '#fff',
+                fontSize: '2rem',        // Increase the size of the "×"
+                minWidth: '40px',        // Make the button area bigger for easier clicking
+                padding: 0,
+                lineHeight: 1,
+                fontWeight: 'bold'
+              }}
+            >
+              ×
+            </Button>
+          </>
+        }
+        sx={{
+          '& .MuiSnackbarContent-root': {
+            backgroundColor: '#323232',
+            minWidth: '250px'
+          }
+        }}
+      />
+      
+      {/* Regular notification snackbar (no UNDO) */}
+      <Snackbar 
+        open={snackbarOpen && !showUndoButton} 
+        autoHideDuration={4000} 
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbarSeverity} 
+          sx={{ width: '100%' }}
+          variant="filled"
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
       
       <Box sx={{ my: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom align="center">
